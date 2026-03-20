@@ -124,7 +124,41 @@
 
 ---
 
-### 功能 10：统一 MCP Server 主入口
+### 功能 10：账号 Prompt 分组管理
+
+**描述**：在 `accounts.yaml` 中新增 `prompt_groups` 区块，按组定义发帖和回复的 prompt 模板；每个账号通过 `group` 字段绑定所属分组。MCP Server 提供 `get_account_prompt` Tool，供 Agent 在生成内容前查询该账号应使用的 prompt。
+
+- **配置结构**：
+  ```yaml
+  prompt_groups:
+    tech_zh:
+      post_prompt: "你是中文技术博主..."
+      reply_prompt: "以友善专业的语气回复..."
+      language: zh
+    lifestyle_en:
+      post_prompt: "You are a lifestyle blogger..."
+      reply_prompt: "Reply warmly..."
+      language: en
+
+  accounts:
+    - id: plurk_001
+      platform: plurk
+      group: tech_zh     # 绑定 prompt_group
+      ...
+  ```
+- **Tool 输入**：`account_id`
+- **Tool 输出**：`{"group": "tech_zh", "post_prompt": "...", "reply_prompt": "...", "language": "zh"}`
+- **说明**：Agent 工作流为：先调用 `get_account_prompt` 获取 prompt → 用 prompt 调 LLM 生成内容 → 调用对应平台发帖/回复 Tool 执行
+
+**边界条件**：
+- 正常：返回该账号绑定的 prompt_group 内容
+- 异常（账号未配置 `group` 字段）：返回空 prompt（`{"group": null, "post_prompt": null, "reply_prompt": null}`），由 Agent 使用默认 prompt
+- 异常（`group` 值在 `prompt_groups` 中不存在）：返回 `{"ok": false, "error": "GROUP_NOT_FOUND", "message": "Prompt group '<group>' not found"}`
+- 异常（`account_id` 不存在）：返回 `ACCOUNT_NOT_FOUND` 错误
+
+---
+
+### 功能 11：统一 MCP Server 主入口
 
 **描述**：将所有平台的所有 Tools 注册到同一个 MCP Server，以 stdio 传输模式运行，启动时加载 `accounts.yaml` 并初始化所有账号。
 
@@ -132,20 +166,20 @@
 - `plurk_post`、`plurk_reply`、`plurk_get_timeline`、`plurk_get_responses`、`plurk_delete`、`plurk_like`、`plurk_get_profile`
 - `fb_post`、`fb_reply_comment`、`fb_get_posts`
 - `x_post`、`x_reply`
+- `get_account_prompt`（跨平台通用）
 
 ---
 
 ## 用户场景
 
-### 场景 1：每日定时多账号跨平台发帖
+### 场景 1：每日定时多账号跨平台发帖（含 Prompt 查询）
 
 **操作流程**：
 1. OpenClaw scheduler 触发每日发帖任务
-2. Agent 生成当天文案（可以为各平台定制）
-3. Agent 遍历所有 Plurk 账号（plurk_001 ~ plurk_100），调用 `plurk_post`
-4. Agent 调用 `fb_post` 发布到各 Facebook 主页
-5. Agent 调用 `x_post` 发布到各 X 账号
-6. 汇总所有发帖结果，记录日志
+2. Agent 遍历所有账号，调用 `get_account_prompt(account_id)` 获取各账号的 post_prompt
+3. Agent 用 post_prompt 调用 LLM 生成该账号的发帖文案
+4. Agent 调用 `plurk_post` / `fb_post` / `x_post` 执行发帖
+5. 汇总所有发帖结果，记录日志
 
 ### 场景 2：Facebook 主页自动回复评论
 
@@ -203,6 +237,8 @@
 - `fb-get-posts-tool`: `fb_get_posts` MCP Tool
 - `x-post-tool`: `x_post` MCP Tool
 - `x-reply-tool`: `x_reply` MCP Tool
+- `prompt-group-manager`: accounts.yaml 中 prompt_groups 的加载与查询能力
+- `get-account-prompt-tool`: `get_account_prompt` MCP Tool
 - `social-mcp-server`: 统一 MCP Server 主入口，注册全部 Tools
 
 ### 修改能力（继承自 plurk-mcp-skill）

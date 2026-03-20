@@ -14,7 +14,7 @@
 ## Phase 2: AccountManager 与 Adapter 接口
 
 - [ ] 2.1 实现 `adapters/base.py`：`BaseAdapter` 抽象类，定义 `account_id`、`platform` 属性，以及 `post()`、`reply()` 抽象方法 `blockedBy: 1.1`
-- [ ] 2.2 实现 `account_manager.py`：`AccountManager` 类，含 `load()` 方法（解析 yaml、按 platform 分发创建 Adapter）、`get(account_id)` 方法、`accounts.yaml` git 追踪安全检查 `blockedBy: 2.1`
+- [ ] 2.2 实现 `account_manager.py`：`AccountManager` 类，含 `load()` 方法（解析 yaml、按 platform 分发创建 Adapter，同时加载 `prompt_groups`）、`get(account_id)` 方法、`get_prompt(account_id)` 方法、`accounts.yaml` git 追踪安全检查 `blockedBy: 2.1`
 - [ ] 2.3 实现 `account_manager.py`：账号初始化失败跳过逻辑，记录警告日志并将失败账号标记为 `ACCOUNT_INIT_FAILED` `blockedBy: 2.2`
 
 ## Phase 3: Platform Adapters 实现
@@ -40,11 +40,15 @@
 - [ ] 6.1 实现 `tools/x_post.py`：`x_post` Tool，含 280 字符校验，调用 TwitterAdapter.post() `blockedBy: 3.3`
 - [ ] 6.2 实现 `tools/x_reply.py`：`x_reply` Tool，含 280 字符校验，调用 TwitterAdapter.reply()，文档说明 tweet_id 需外部传入 `blockedBy: 3.3`
 
+## Phase 6.5: Prompt 管理 Tool
+
+- [ ] 6.3 实现 `tools/get_account_prompt.py`：`get_account_prompt` Tool，调用 AccountManager.get_prompt(account_id)，处理账号无 group、group 不存在、account_id 不存在三种边界条件 `blockedBy: 2.2`
+
 ## Phase 7: 统一 MCP Server 主入口与文档
 
-- [ ] 7.1 实现 `server.py`：统一 MCP Server，启动时实例化 AccountManager 并调用 `load()`，注册全部 12 个 Tools，stdio 传输模式 `blockedBy: 4.1, 4.2, 4.3, 5.1, 5.2, 5.3, 6.1, 6.2`
-- [ ] 7.2 编写 `mcp-servers/social/README.md`：安装步骤、`accounts.yaml` 配置说明（三平台）、OpenClaw 配置示例、Facebook 长期 token 获取方法 `blockedBy: 7.1`
-- [ ] 7.3 更新 `.agents/skills/plurk-mcp/SKILL.md`：改名为 `social-mcp`，新增多账号使用说明（account_id 用法）、Facebook 和 X 场景调用链示例、x_reply 的 tweet_id 来源说明 `blockedBy: 7.1`
+- [ ] 7.1 实现 `server.py`：统一 MCP Server，启动时实例化 AccountManager 并调用 `load()`，注册全部 13 个 Tools（含 get_account_prompt），stdio 传输模式 `blockedBy: 4.1, 4.2, 4.3, 5.1, 5.2, 5.3, 6.1, 6.2, 6.3`
+- [ ] 7.2 编写 `mcp-servers/social/README.md`：安装步骤、`accounts.yaml` 配置说明（三平台 + prompt_groups）、OpenClaw 完整工作流示例（含 get_account_prompt → 生成内容 → 发帖）、Facebook 长期 token 获取方法 `blockedBy: 7.1`
+- [ ] 7.3 更新 `.agents/skills/plurk-mcp/SKILL.md`：改名为 `social-mcp`，新增多账号使用说明、prompt_groups 配置指引、含 get_account_prompt 的完整发帖/回复调用链示例、x_reply 的 tweet_id 来源说明 `blockedBy: 7.1`
 
 ## Phase 8: 集成验证
 
@@ -53,3 +57,4 @@
 - [ ] 8.3 验证 Facebook：调用 `fb_post` 发帖到主页，`fb_get_posts` 查看帖子，`fb_reply_comment` 回复评论 `blockedBy: 7.1`
 - [ ] 8.4 验证 X：调用 `x_post` 发推文，`x_reply` 回复已知 tweet_id 的推文 `blockedBy: 7.1`
 - [ ] 8.5 验证错误场景：传入无效 account_id 返回 `ACCOUNT_NOT_FOUND`；某账号凭据失效时不影响其他账号正常调用 `blockedBy: 8.1`
+- [ ] 8.6 验证 `get_account_prompt`：账号有 group 时返回对应 prompt；账号无 group 时返回空 prompt；group 不存在时返回 `GROUP_NOT_FOUND` `blockedBy: 7.1`
