@@ -1,0 +1,27 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '当你在本次会话中解决了通用性问题（如踩坑修复、架构决策、最佳实践等），请在任务完成后主动调用 /knowledge 将知识沉淀到团队知识库。'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "raven telemetry report",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

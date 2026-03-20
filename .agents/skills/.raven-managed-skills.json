@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "sources": {
+    "builtin:init-skills": {
+      "label": "Init Skills 智能同步",
+      "agents": {
+        "codemaker": [
+          "feedback",
+          "knowledge",
+          "popo-doc-read",
+          "sdd-apply-change",
+          "sdd-archive-change",
+          "sdd-bulk-archive-change",
+          "sdd-continue-change",
+          "sdd-explore",
+          "sdd-fast-change",
+          "sdd-feedback",
+          "sdd-ff-change",
+          "sdd-knowledge-evolve-onboard",
+          "sdd-knowledge-usage-onboard",
+          "sdd-new-change",
+          "sdd-onboard",
+          "sdd-prd-check",
+          "sdd-sync-specs",
+          "sdd-verify-change"
+        ],
+        "claude-code": [
+          "feedback",
+          "knowledge",
+          "popo-doc-read",
+          "sdd-apply-change",
+          "sdd-archive-change",
+          "sdd-bulk-archive-change",
+          "sdd-continue-change",
+          "sdd-explore",
+          "sdd-fast-change",
+          "sdd-feedback",
+          "sdd-ff-change",
+          "sdd-knowledge-evolve-onboard",
+          "sdd-knowledge-usage-onboard",
+          "sdd-new-change",
+          "sdd-onboard",
+          "sdd-prd-check",
+          "sdd-sync-specs",
+          "sdd-verify-change"
+        ]
+      }
+    }
+  }
+}

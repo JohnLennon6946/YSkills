@@ -1,0 +1,12 @@
+schema: sdd
+context: |
+  技术栈: 根据你的项目调整
+  工作流: 规范驱动开发（Spec-Driven Development）通用工作流，技术栈无关
+  请根据项目实际情况修改此配置
+rules:
+  prd:
+    - 包含回滚计划
+    - 识别受影响的团队或模块
+  design:
+    - 使用 Given/When/Then 格式描述行为
+    - 尽量引用现有模式而非创造新模式
