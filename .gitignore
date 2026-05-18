@@ -4,3 +4,4 @@
 
 # MCP Server secrets
 mcp-servers/plurk/.env
+mcp-servers/social/accounts.yaml
