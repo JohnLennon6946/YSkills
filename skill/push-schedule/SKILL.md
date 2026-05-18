@@ -56,8 +56,9 @@ description: |
 ```
 for each type in todayTypes:
   try:
-    1. 调用 crowd-async-fetch 获取 crowdPacketUrl（P2 阶段）
-       - P2 未就绪时：跳过此步骤，通知管理员需手动通过模式 A 创建
+    1. 调用 crowd-async-fetch 获取 crowdPacketUrl
+       - 传入 type，等待 open-task-process 提交 + open-task-process-status 轮询完成
+       - 获取到 dataUrl 作为 crowdPacketUrl
     2. 调用 wechat-push-create（mode="B", type=当前类型, crowdPacketUrl=获取到的URL）
     3. 记录结果：{ type, success: true, planId, planName, planTime, launchAccount }
   catch error:
@@ -80,9 +81,8 @@ for each type in todayTypes:
 | 错误场景 | 处理方式 |
 |---------|---------|
 | config.json 读取失败 | 使用内置默认排期 |
-| 某类型人群拉取超时（P2） | 记录该类型失败，继续下一个 |
+| 某类型人群拉取超时 | 记录该类型失败，继续下一个 |
 | 某类型无历史模板 | 记录该类型失败，继续下一个 |
 | 某类型创建接口失败 | 记录该类型失败，继续下一个 |
 | 所有类型均失败 | 汇总所有失败原因，通知管理员 |
 | notifyUsers 为空 | 仅群聊通知，不发私聊 |
-| crowd-async-fetch 不可用（P2 前） | 跳过人群拉取，提示管理员手动创建 |
