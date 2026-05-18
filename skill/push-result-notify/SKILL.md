@@ -19,8 +19,17 @@ description: |
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | results | Array | 是 | 创建结果列表，每项包含 type、success、planId、planName、planTime、launchAccount、errorReason |
-| targetUsers | Array | 是 | 通知目标用户列表（邮箱格式），模式 A/C 为对话用户，模式 B 为 config.json 中的 notifyUsers |
+| targetUsers | Array | 是 | 通知目标用户列表（邮箱格式） |
 | mode | string | 是 | 工作模式：A、B 或 C |
+| channel | string | 否 | 触发渠道：`group`（群聊@机器人）或 `private`（私聊机器人），默认 group |
+
+## 通知路由规则
+
+| 触发方式 | targetUsers 来源 | 群聊通知 | 私聊通知 |
+|---------|-----------------|---------|---------|
+| 模式 B（定时任务） | config.json 的 businessAdmins | @业务管理员 | 私聊业务管理员 |
+| 模式 A/C（群聊 @机器人） | 触发该对话的用户 | @该用户 | 私聊该用户 |
+| 模式 A/C（私聊机器人） | 触发该对话的用户 | 不发群聊 | 私聊该用户 |
 
 ## 通知格式
 
@@ -59,13 +68,14 @@ description: |
 
 2. **群聊 @通知**
 
-   在当前群聊中发送通知消息，@targetUsers 中的所有用户。
+   - 如果 `channel` 为 `group`：在当前群聊中发送通知消息，@targetUsers 中的所有用户
+   - 如果 `channel` 为 `private`：跳过群聊通知
 
 3. **私聊发送**
 
    对 targetUsers 中的每个用户，通过私聊发送完整的创建结果。
 
-   - 如果 targetUsers 为空（模式 B 未配置通知人）：跳过私聊，仅群聊发送
+   - 如果 targetUsers 为空：跳过私聊
    - 如果私聊发送失败：记录日志，不阻塞主流程，不重试
 
 ## 错误处理

@@ -1,6 +1,9 @@
 {
-  "admins": [],
-  "notifyUsers": [],
+  "business": "moyi-wechat-push",
+  "businessAdmins": [
+    "wangguojian@corp.netease.com",
+    "renpengtao@corp.netease.com"
+  ],
   "schedule": {
     "签到": [0, 1, 2, 3, 4, 5, 6],
     "高耗币": [1],
