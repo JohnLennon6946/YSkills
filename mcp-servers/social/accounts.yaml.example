@@ -1,0 +1,60 @@
+# =============================================
+# Social MCP Server — 账号配置
+# 复制此文件为 accounts.yaml 并填写对应值
+# 警告：accounts.yaml 已加入 .gitignore，请勿提交至版本库
+# =============================================
+
+# ── Prompt 分组（按账号人设/风格分类）──────────────
+prompt_groups:
+  tech_zh:
+    post_prompt: "你是一个专注分享技术知识的中文博主。每次发帖分享一条实用的技术小技巧，风格简洁有趣，适当使用 emoji，内容不超过 200 字。"
+    reply_prompt: "以友善、专业的语气回复，鼓励技术交流，语言简洁，不超过 100 字。"
+    language: zh
+
+  lifestyle_en:
+    post_prompt: "You are a lifestyle blogger sharing daily tips and positive vibes. Keep posts warm, engaging, and under 200 characters."
+    reply_prompt: "Reply warmly and positively, like chatting with a close friend. Keep it under 100 characters."
+    language: en
+
+# ── 账号列表 ───────────────────────────────────────
+accounts:
+  # --- Plurk: OAuth 模式 ---
+  - id: plurk_001
+    platform: plurk
+    group: tech_zh          # 绑定 prompt 分组（可选）
+    auth_mode: oauth        # oauth | password
+    app_key: YOUR_APP_KEY
+    app_secret: YOUR_APP_SECRET
+    access_token: YOUR_ACCESS_TOKEN
+    access_token_secret: YOUR_ACCESS_TOKEN_SECRET
+
+  # --- Plurk: 账号密码模式 ---
+  - id: plurk_002
+    platform: plurk
+    group: lifestyle_en
+    auth_mode: password
+    username: YOUR_PLURK_USERNAME
+    password: YOUR_PLURK_PASSWORD
+
+  # --- Facebook 主页 ---
+  - id: fb_page_main
+    platform: facebook
+    group: tech_zh
+    page_id: "YOUR_PAGE_ID"
+    page_access_token: YOUR_PAGE_ACCESS_TOKEN
+    # 如何获取 page_access_token：
+    # 1. 前往 https://developers.facebook.com/ 创建 App
+    # 2. 添加 Pages API 权限（pages_manage_posts / pages_read_engagement）
+    # 3. 通过 Graph API Explorer 获取 Page Access Token
+    # 4. 建议生成长期 token（有效期 60 天或永久）
+
+  # --- X (Twitter) ---
+  - id: x_account_001
+    platform: x
+    group: lifestyle_en
+    api_key: YOUR_API_KEY
+    api_secret: YOUR_API_SECRET
+    access_token: YOUR_ACCESS_TOKEN
+    access_token_secret: YOUR_ACCESS_TOKEN_SECRET
+    # 如何获取：前往 https://developer.twitter.com/ 创建 App
+    # 选择 OAuth 1.0a，权限需包含 Read and Write
