@@ -65,13 +65,19 @@ for each type in todayTypes:
     继续执行下一个类型（不中断）
 ```
 
-### 步骤 4：汇总通知
+### 步骤 4：汇总通知（必须执行）
+
+⚠️ 模式 B 定时任务完成后，**必须通知业务管理员**，不可跳过。
 
 所有类型执行完毕后，从 config.json 读取 `businessAdmins` 列表，发送汇总通知。
 
-**群聊通知**（@业务管理员）：
+**通知工具选择**：
+- 群聊 @通知：使用 `popo-group-cli` 技能的 `send` 命令，指定 `atUserIds` 为 businessAdmins 列表
+- 私聊通知：使用 `message` 工具 `action=send`，`channel=popo`，逐一发给每位业务管理员
+
+**群聊通知**（在群内 @所有业务管理员，使用 `popo-group-cli send`）：
 ```
-@wangguojian @renpengtao 今日微信Push计划执行结果汇总
+@wangguojian @renpengtao @yusiyu01 今日微信Push计划执行结果汇总
 
 ✅ 成功：
 - 签到：计划ID 3679010，发送时间 2026-05-18 20:00
@@ -81,7 +87,7 @@ for each type in todayTypes:
 - 私聊：过去30天无可用历史模板记录
 ```
 
-**私聊通知**（逐一发给每位业务管理员）：
+**私聊通知**（使用 `message action=send channel=popo` 逐一发给每位业务管理员）：
 ```
 今日微信Push计划执行结果汇总
 
@@ -105,9 +111,11 @@ for each type in todayTypes:
   - 失败原因：过去30天无可用历史模板记录
 ```
 
-如果 businessAdmins 为空，仅发群聊通知，不发私聊。
-
-如果全部成功，不展示「❌ 失败」部分；如果全部失败，不展示「✅ 成功」部分。
+**注意事项**：
+- 群聊通知和私聊通知都必须发送，不可遗漏
+- 如果 businessAdmins 为空，仅发群聊通知，不发私聊
+- 如果全部成功，不展示「❌ 失败」部分；如果全部失败，不展示「✅ 成功」部分
+- 通知发送失败不影响任务本身，但需记录日志
 
 ## 人群包异步拉取
 
@@ -129,24 +137,24 @@ mws moyi-activity-backend open-task-process-status --params "{\"processId\":\"{p
 ```
 
 - 输出字段：
-  - `status`：`"process"` 进行中 / `"done"` 完成
-  - `rate`：进度百分比（0-100）
-  - `dataUrl`：完成后的下载地址（即 crowdPacketUrl）
-  - `totalNum`：数据总量
+    - `status`：`"process"` 进行中 / `"done"` 完成
+    - `rate`：进度百分比（0-100）
+    - `dataUrl`：完成后的下载地址（即 crowdPacketUrl）
+    - `totalNum`：数据总量
 
 ### 轮询策略
 
 1. 提交任务获取 processId
-2. 每 10 秒调用一次 `open-task-process-status` 查询
+2. 每 1 分钟调用一次 `open-task-process-status` 查询
 3. `status === "done"` 时，取 `dataUrl` 作为 crowdPacketUrl 返回
-4. 超过 5 分钟（30 次轮询）仍未完成，判定为超时失败
+4. 超过 3 小时（180 次轮询）仍未完成，判定为超时失败
 
 ## 错误处理
 
 | 错误场景 | 处理方式 |
 |---------|---------|
 | config.json 读取失败 | 使用内置默认排期，businessAdmins 为空 |
-| 某类型人群拉取超时（5分钟） | 记录该类型失败，继续下一个 |
+| 某类型人群拉取超时（3小时） | 记录该类型失败，继续下一个 |
 | 某类型 open-task-process 调用失败 | 记录该类型失败，继续下一个 |
 | 某类型无历史模板 | 记录该类型失败（由 wechat-push-create 返回），继续下一个 |
 | 某类型创建接口失败 | 记录该类型失败（由 wechat-push-create 返回），继续下一个 |

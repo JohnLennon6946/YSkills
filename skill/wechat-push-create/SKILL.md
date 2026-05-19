@@ -36,9 +36,9 @@ Push 计划创建执行 Skill：接收经过意图识别和权限校验的创建
 
 - 主入口传入 nosKey → 直接使用
 - 主入口传入 txt 文件路径（P1 阶段）：
-  1. 文件校验：检查存在性、.txt 格式、非空
-  2. 上传至 NOS 获取 nosKey（失败重试 3 次）
-  3. 上传能力未就绪时提示用户直接提供 nosKey
+    1. 文件校验：检查存在性、.txt 格式、非空
+    2. 上传至 NOS 获取 nosKey（失败重试 3 次）
+    3. 上传能力未就绪时提示用户直接提供 nosKey
 
 ### 步骤 2：查询历史最优模板
 
@@ -49,8 +49,15 @@ START_MS=$(($(date +%s) * 1000 - 30 * 24 * 60 * 60 * 1000))
 END_MS=$(($(date +%s) * 1000))
 
 mws moyi-activity-backend secretary-page \
-  --params "{\"page\":\"{\\\"from\\\":0,\\\"size\\\":100}\",\"planName\":\"{类型关键词}\",\"start\":\"${START_MS}\",\"end\":\"${END_MS}\"}"
+  --params "{\"page\":\"{\\\"from\\\":0,\\\"to\\\":1,\\\"size\\\":100}\",\"planName\":\"{类型关键词}\",\"start\":\"${START_MS}\",\"end\":\"${END_MS}\"}"
 ```
+
+**分页参数说明**（PageRequest）：
+- `from`：当前页码（从 0 开始）
+- `to`：下一页页码（`from + 1`）
+- `size`：每页条数
+
+示例：查第一页 `{"from":0,"to":1,"size":100}`；翻下一页 `{"from":1,"to":2,"size":100}`
 
 从返回结果中筛选：
 1. 仅保留 `launchAccount` 为 `moyi_wechat_welfare` 的记录
