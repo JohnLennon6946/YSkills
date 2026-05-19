@@ -35,10 +35,14 @@ Push 计划创建执行 Skill：接收经过意图识别和权限校验的创建
 ### 步骤 1：获取 crowdPacketUrl
 
 - 主入口传入 nosKey → 直接使用
-- 主入口传入 txt 文件路径（P1 阶段）：
+- 主入口传入 txt 文件路径：
     1. 文件校验：检查存在性、.txt 格式、非空
-    2. 上传至 NOS 获取 nosKey（失败重试 3 次）
-    3. 上传能力未就绪时提示用户直接提供 nosKey
+    2. 上传至 NOS 公有桶获取 crowdPacketUrl：
+       ```bash
+       nos-cli upload <txt文件路径> --public
+       ```
+       从返回 JSON 中取 `nos_url` 作为 crowdPacketUrl
+    3. 上传失败重试 3 次，均失败则提示用户直接提供 nosKey
 
 ### 步骤 2：查询历史最优模板
 
