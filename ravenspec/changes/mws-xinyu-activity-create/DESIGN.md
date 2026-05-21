@@ -267,7 +267,7 @@ mws moyi-activity-backend <method> --env <online|test> --params '<json>' --forma
 涉及的 12 个 method：`plan-list / plan-create / panel-list / list / mundo-query / info-save / tenant-list / tenant-query / template-create / act-resource-page / act-resource-create / copy-mundo`
 
 **关键参数注意**：
-- `copy-mundo`：`aimActivityId` = 源活动 ID（被克隆的），`activityId` = 新活动 ID（克隆目标）。**注意顺序，不要写反。**
+- `copy-mundo`：`activityId` = 源活动 ID（被克隆的，后端从该活动读取 mundo 树），`aimActivityId` = 新活动 ID（克隆目标，后端自动创建 mundo 骨架并写入）。**注意：mws schema 描述有误，以源码为准。**
 - `act-resource-create`：返回 boolean，不返回新 ID。创建后需反查 `act-resource-page` 获取新资源 ID。
 - `template-create`：返回完整 TenantConfigVO（含新 tenantId / token），可直接提取映射。
 - `tenant-list` / `act-resource-page`：分页接口，需循环翻页确保拉完所有数据。

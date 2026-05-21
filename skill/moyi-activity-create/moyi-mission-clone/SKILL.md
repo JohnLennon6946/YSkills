@@ -33,12 +33,12 @@ mws moyi-activity-backend mundo-query --env <env> --params '{"activityId": "<sou
 ### Step 2: 调用 copy-mundo
 
 ```bash
-mws moyi-activity-backend copy-mundo --env <env> --params '{"aimActivityId": "<sourceActivityId>", "activityId": "<newActivityId>", "missionName": "<missionName>", "startTime": "<startTime>", "endTime": "<endTime>", "business": "moyi"}' --format json
+mws moyi-activity-backend copy-mundo --env <env> --params '{"activityId": "<sourceActivityId>", "aimActivityId": "<newActivityId>", "missionName": "<missionName>", "startTime": "<startTime>", "endTime": "<endTime>", "business": "moyi"}' --format json
 ```
 
 **关键参数说明**：
-- `aimActivityId` = 源活动 ID（被克隆的）
-- `activityId` = 新活动 ID（克隆目标）
+- `activityId` = 源活动 ID（被克隆的，后端从该活动读取 mundo 树）
+- `aimActivityId` = 新活动 ID（克隆目标，后端会自动在该活动上创建 mundo 骨架并写入数据）
 
 若失败 → 返回整体失败 + 错误原因。
 

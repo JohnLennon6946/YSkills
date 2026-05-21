@@ -13,7 +13,7 @@
 - **WHEN** 主 skill 调用本 skill 并传入合法的源 activityId + 新 mission panel activityId（来自新 plan 的 panel-list）+ 新 plan 信息 + 任务资源数据
 - **THEN** 必须依次执行：
   1. 调用 `POST /api/social/mission/backend/mundo/query`（mws: `mundo-query`），入参 activityId = **源** mission panel activityId，拉取源 mundo 树（用于 M2 对齐）
-  2. 调用 `POST /api/social/mission/backend/copy/mundo`（mws: `moyi-activity-backend copy-mundo`），入参 MissionBackendCopyReq：`aimActivityId` = 源 mission panel activityId（被克隆的源），`activityId` = 新 mission panel activityId（克隆目标），`missionName` = 新名（按日期规则生成），`startTime/endTime` = 新活动时间，`business` = "moyi"
+  2. 调用 `POST /api/social/mission/backend/copy/mundo`（mws: `moyi-activity-backend copy-mundo`），入参 MissionBackendCopyReq：`activityId` = 源 mission panel activityId（被克隆的源，后端从该活动读取 mundo 树），`aimActivityId` = 新 mission panel activityId（克隆目标，后端自动在该活动上创建 mundo 骨架并写入数据），`missionName` = 新名（按日期规则生成），`startTime/endTime` = 新活动时间，`business` = "moyi"
   3. 调用 `mundo-query`，入参 activityId = **新** mission panel activityId，拉取新 mundo 树
   4. 按 Step 1 源 missionBoxes 与 Step 3 新 missionBoxes 的**顺序索引对齐**构建映射表 M2（源 box id → 新 box id）；若数量不一致则按 missionBoxName 匹配兜底
   5. 遍历新 mission，按 `missionName` 在任务资源数据中精确反查

@@ -367,17 +367,28 @@ int probabilityType = request.getLotteryContext().getChangeLevel() != null
 - 暴走配置 / 扩展点配置都是 null
 - 本期不需要处理这些配置（与 F17 同）
 
-### F20: copy-mundo 参数语义 ✅ 已通过 schema 确认
+### F20: copy-mundo 参数语义 ✅ 已通过源码确认（mws schema 描述有误）
 
-**问题**：初版 spec 将 `activityId` 和 `aimActivityId` 写反（`activityId = 源`，`aimActivityId = 0`）。
+**问题**：mws schema 描述将 `activityId` 和 `aimActivityId` 语义写反，导致调用 500。
 
-**schema 实际语义**（来自 `mws schema moyi-activity-backend.copy-mundo`）：
-- `activityId` = "新活动 ID（克隆后的**目标**活动）" — 应传新 plan 的 mission panel activityId
-- `aimActivityId` = "源活动 ID（被克隆的活动）" — 应传源 plan 的 mission panel activityId
+**mws schema 描述（有误）**：
+- `activityId` = "新活动 ID（克隆后的目标活动）"
+- `aimActivityId` = "源活动 ID（被克隆的活动）"
+
+**源码实际语义**（来自 `MissionBackendSofaServiceImpl.java:150-196` + `MissionBackendCopyReq.java` 注释）：
+- `activityId` = **源活动 ID**（被克隆的活动）— 代码第 151 行 `queryMundo(req.getActivityId())` 从该活动读取 mundo 树
+- `aimActivityId` = **目标活动 ID**（克隆目标）— Java 注释"目标活动id"，saveMundo 第 104 行 `activityId = req.getAimActivityId()` 在该活动上创建 mundo 骨架
 
 **接口描述原文**：基于源活动（aimActivityId）的配置整体克隆出新的活动主任务，并替换为传入的 activityId / 时间区间 / 任务名等基础信息。
+> ⚠️ 该描述文案本身也有歧义（"基于源活动(aimActivityId)"暗示 aim=源），但代码行为明确：aim=目标。
 
-**已修复**：xinyu-mission-clone spec 已修正参数映射，并增加源 mundo-query 步骤。
+**验证经过**：
+- 传 `activityId=22090435(新panel)` + `aimActivityId=22095430(源)` → 500（新 panel 无 mundo，queryMundo 返回 null）
+- 源码确认正确调用方式：`activityId=源(有mundo)` + `aimActivityId=新(目标)`
+
+**额外发现**：copy-mundo 内部调用 saveMundo 会**自动在目标活动上创建 mundo 骨架**（无需提前初始化），然后把源 box/mission 复制过去。
+
+**已修复**：moyi-mission-clone SKILL.md 已修正参数映射。
 
 ### F21: act-resource-create 返回 BooleanResult ⚠️ 无法直接获取新 ID
 
