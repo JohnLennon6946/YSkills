@@ -2,7 +2,7 @@
 
 ## 方案概述
 
-本方案以 **5 个 Markdown skill 文件**（1 主 + 4 子）实现心遇活动发布计划克隆能力。所有 skill 通过 LLM 编排执行，业务调用全部委托 `bash` 工具调 `mws moyi-activity-backend.*` 命令，资源表格读取委托现有 `popo-doc-read` skill（design 阶段已确认有兼容性风险，见风险表）。主 skill 持有「源 ID → 新 ID」映射表（M1-M6）作为上下文跨子 skill 传递，每个子 skill 独立返回结构化结果（成功/失败/兜底事件清单）。所有 5 个 skill 文件落在 YSkills 仓的 `.claude/skills/` 目录下，与现有的 `sdd-mws-cli`、`popo-doc-read` 同级。
+本方案以 **5 个 Markdown skill 文件**（1 主 + 4 子）实现心遇活动发布计划克隆能力。所有 skill 通过 LLM 编排执行，业务调用全部委托 `bash` 工具调 `mws moyi-activity-backend.*` 命令，资源表格读取委托现有 `popo-doc-read` skill（design 阶段已确认有兼容性风险，见风险表）。主 skill 持有「源 ID → 新 ID」映射表（M1-M6）作为上下文跨子 skill 传递，每个子 skill 独立返回结构化结果（成功/失败/兜底事件清单）。所有 5 个 skill 文件落在 YSkills 仓的 `skill/` 目录下，与现有的 `sdd-mws-cli`、`popo-doc-read` 同级。
 
 ## 关键决策
 
@@ -185,13 +185,13 @@ mappings = {
 
 | 文件 | 操作 | 改动内容 |
 |------|------|----------|
-| `.claude/skills/moyi-activity-create/SKILL.md` | 新增 | 主 skill：POPO 入口意图识别、运营多轮交互、模板检索、plan-create、子 skill 编排、兜底汇总 |
-| `.claude/skills/moyi-mission-clone/SKILL.md` | 新增 | 子 skill：copy-mundo 一键克隆 + mundo-query + 遍历 info-save 替换 rewardBoxId |
-| `.claude/skills/moyi-lottery-clone/SKILL.md` | 新增 | 子 skill：tenant-list + tenant-query + 构造新 TenantConfigVO + template-create |
-| `.claude/skills/moyi-act-resource-clone/SKILL.md` | 新增 | 子 skill：act-resource-page + 按 type=7→4 顺序 + configJson 7 项 patch + ruleText 日期替换 |
-| `.claude/skills/moyi-resource-sheet-parser/SKILL.md` | 新增 | 子 skill：调 popo-doc-read + 解析任务/抽奖 sheet + 库存类型映射 |
+| `skill/moyi-activity-create/SKILL.md` | 新增 | 主 skill：POPO 入口意图识别、运营多轮交互、模板检索、plan-create、子 skill 编排、兜底汇总 |
+| `skill/moyi-mission-clone/SKILL.md` | 新增 | 子 skill：copy-mundo 一键克隆 + mundo-query + 遍历 info-save 替换 rewardBoxId |
+| `skill/moyi-lottery-clone/SKILL.md` | 新增 | 子 skill：tenant-list + tenant-query + 构造新 TenantConfigVO + template-create |
+| `skill/moyi-act-resource-clone/SKILL.md` | 新增 | 子 skill：act-resource-page + 按 type=7→4 顺序 + configJson 7 项 patch + ruleText 日期替换 |
+| `skill/moyi-resource-sheet-parser/SKILL.md` | 新增 | 子 skill：调 popo-doc-read + 解析任务/抽奖 sheet + 库存类型映射 |
 
-5 个 skill 同级落在 `.claude/skills/` 下，单仓内零外部新依赖。
+5 个 skill 同级落在 `skill/` 下，单仓内零外部新依赖。
 
 ## 关键接口
 
