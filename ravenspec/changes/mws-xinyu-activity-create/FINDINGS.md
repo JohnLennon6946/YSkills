@@ -400,7 +400,7 @@ int probabilityType = request.getLotteryContext().getChangeLevel() != null
 - 若同名资源已存在，反查可能命中旧资源 → 建议反查时取 createTime 最新的一条
 - 若创建成功但后端异步处理导致反查瞬间查不到 → 增加短延时重试（最多 2 次，间隔 1s）
 
-**已修复**：xinyu-act-resource-clone spec 已增加"创建后反查"步骤。
+**已修复**：moyi-act-resource-clone spec 已增加"创建后反查"步骤。
 
 ### F22: act-resource-page / tenant-list 分页处理
 

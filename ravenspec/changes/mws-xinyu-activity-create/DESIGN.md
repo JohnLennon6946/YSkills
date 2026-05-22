@@ -21,7 +21,7 @@
 
 ### 决策 2：主 skill 与子 skill 的调用模式 = LLM 委托调用 + 结构化返回
 
-**选择**：主 skill (`xinyu-plan-clone`) 在 Markdown 指令中**明确指示** LLM 在合适时机使用 `skill` 工具调用各子 skill，并要求每个子 skill 在响应末尾输出**约定结构的 JSON 块**（含 success / mapping / events 字段），主 skill 从该 JSON 块解析数据后继续编排。
+**选择**：主 skill (`moyi-activity-create`) 在 Markdown 指令中**明确指示** LLM 在合适时机使用 `skill` 工具调用各子 skill，并要求每个子 skill 在响应末尾输出**约定结构的 JSON 块**（含 success / mapping / events 字段），主 skill 从该 JSON 块解析数据后继续编排。
 
 **理由**：
 - LLM 解析 JSON 比解析自然语言可靠
@@ -51,8 +51,8 @@
 ### 决策 4：POPO 在线表格读取 — 优先复用 popo-doc-read + 兜底新建 popo-sheet-read
 
 **选择**：
-- 第一阶段（MVP）：`xinyu-resource-sheet-parser` 直接调用 `popo-doc-read` skill，将返回的文本通过 LLM 二次解析为结构化数据
-- 第二阶段（如第一阶段失败）：design 阶段实测后若 popo-doc-read 完全无法识别 sheet 结构，由 `xinyu-resource-sheet-parser` 的 SKILL.md 增加新建 `popo-sheet-read` skill 的提案
+- 第一阶段（MVP）：`moyi-resource-sheet-parser` 直接调用 `popo-doc-read` skill，将返回的文本通过 LLM 二次解析为结构化数据
+- 第二阶段（如第一阶段失败）：design 阶段实测后若 popo-doc-read 完全无法识别 sheet 结构，由 `moyi-resource-sheet-parser` 的 SKILL.md 增加新建 `popo-sheet-read` skill 的提案
 
 **理由**：
 - 仓内无专用 sheet skill，新建依赖增加 setup 成本
@@ -138,7 +138,7 @@ mappings = {
 
 ### 决策 8：POPO bot 集成 — 把本 skill 作为 bot 后端的"执行模块"
 
-**选择**：本期 5 个 skill 是**业务能力载体**，POPO bot 服务是**入口适配器**：bot 负责 POPO 消息收发 + sender_id 解析 + 调用 `xinyu-plan-clone` skill；skill 内部不直接依赖 POPO API。
+**选择**：本期 5 个 skill 是**业务能力载体**，POPO bot 服务是**入口适配器**：bot 负责 POPO 消息收发 + sender_id 解析 + 调用 `moyi-activity-create` skill；skill 内部不直接依赖 POPO API。
 
 **理由**：
 - skill 与传输层解耦，未来换企业微信 / 钉钉等渠道时复用 skill
@@ -151,7 +151,7 @@ mappings = {
 
 ### 决策 9：奖池字段构造 — TenantConfigVO JSON 整体覆盖
 
-**选择**：`xinyu-lottery-clone` 在构造新奖池时，把 tenant-query 返回的 TenantConfigVO **整体作为基线**，仅修改：
+**选择**：`moyi-lottery-clone` 在构造新奖池时，把 tenant-query 返回的 TenantConfigVO **整体作为基线**，仅修改：
 - basicInfo.remark / startTime / endTime / activityId
 - basicInfo.token / tenantId 置 0（让后端生成）
 - tenantExtInfo.interestId（来自资源表格）
@@ -170,7 +170,7 @@ mappings = {
 
 ### 决策 10：抽奖转盘 configJson patch — 字段级精确替换
 
-**选择**：`xinyu-act-resource-clone` 解析 configJson 为 JSON 对象后，对**固定 7 个 key** 做精确替换（token / relatedPoolId / relatedTicketId / relatedActivityId / poolCount / taskPlayId / taskGroupId），ruleText 单独走日期识别替换分支。其余 30+ 字段（图片 URL / 颜色等）原样保留，最终序列化回 JSON 字符串。
+**选择**：`moyi-act-resource-clone` 解析 configJson 为 JSON 对象后，对**固定 7 个 key** 做精确替换（token / relatedPoolId / relatedTicketId / relatedActivityId / poolCount / taskPlayId / taskGroupId），ruleText 单独走日期识别替换分支。其余 30+ 字段（图片 URL / 颜色等）原样保留，最终序列化回 JSON 字符串。
 
 **理由**：
 - 7 个跨模块引用字段是真实数据已确认的（FINDINGS F16）
@@ -185,11 +185,11 @@ mappings = {
 
 | 文件 | 操作 | 改动内容 |
 |------|------|----------|
-| `.claude/skills/xinyu-plan-clone/SKILL.md` | 新增 | 主 skill：POPO 入口意图识别、运营多轮交互、模板检索、plan-create、子 skill 编排、兜底汇总 |
-| `.claude/skills/xinyu-mission-clone/SKILL.md` | 新增 | 子 skill：copy-mundo 一键克隆 + mundo-query + 遍历 info-save 替换 rewardBoxId |
-| `.claude/skills/xinyu-lottery-clone/SKILL.md` | 新增 | 子 skill：tenant-list + tenant-query + 构造新 TenantConfigVO + template-create |
-| `.claude/skills/xinyu-act-resource-clone/SKILL.md` | 新增 | 子 skill：act-resource-page + 按 type=7→4 顺序 + configJson 7 项 patch + ruleText 日期替换 |
-| `.claude/skills/xinyu-resource-sheet-parser/SKILL.md` | 新增 | 子 skill：调 popo-doc-read + 解析任务/抽奖 sheet + 库存类型映射 |
+| `.claude/skills/moyi-activity-create/SKILL.md` | 新增 | 主 skill：POPO 入口意图识别、运营多轮交互、模板检索、plan-create、子 skill 编排、兜底汇总 |
+| `.claude/skills/moyi-mission-clone/SKILL.md` | 新增 | 子 skill：copy-mundo 一键克隆 + mundo-query + 遍历 info-save 替换 rewardBoxId |
+| `.claude/skills/moyi-lottery-clone/SKILL.md` | 新增 | 子 skill：tenant-list + tenant-query + 构造新 TenantConfigVO + template-create |
+| `.claude/skills/moyi-act-resource-clone/SKILL.md` | 新增 | 子 skill：act-resource-page + 按 type=7→4 顺序 + configJson 7 项 patch + ruleText 日期替换 |
+| `.claude/skills/moyi-resource-sheet-parser/SKILL.md` | 新增 | 子 skill：调 popo-doc-read + 解析任务/抽奖 sheet + 库存类型映射 |
 
 5 个 skill 同级落在 `.claude/skills/` 下，单仓内零外部新依赖。
 
@@ -199,10 +199,10 @@ mappings = {
 
 每个子 skill 在响应末尾输出约定 JSON 块（用 ` ```json ... ``` ` 包裹），主 skill 解析。
 
-**xinyu-mission-clone 返回**：
+**moyi-mission-clone 返回**：
 ```json
 {
-  "skill": "xinyu-mission-clone",
+  "skill": "moyi-mission-clone",
   "success": true,
   "newMissionActivityId": 22095440,
   "boxIdMapping": {"9679761": "9679800"},
@@ -213,10 +213,10 @@ mappings = {
 }
 ```
 
-**xinyu-lottery-clone 返回**：
+**moyi-lottery-clone 返回**：
 ```json
 {
-  "skill": "xinyu-lottery-clone",
+  "skill": "moyi-lottery-clone",
   "success": true,
   "tenantIdMapping": {"601111": "601120"},
   "tokenMapping": {"zTklK30nLX2t3Fs8Yd8z31cUe": "aBcdEfGhIjKlMnOpQrStUvWxY"},
@@ -226,10 +226,10 @@ mappings = {
 }
 ```
 
-**xinyu-act-resource-clone 返回**：
+**moyi-act-resource-clone 返回**：
 ```json
 {
-  "skill": "xinyu-act-resource-clone",
+  "skill": "moyi-act-resource-clone",
   "success": true,
   "taskPlayIdMapping": {"844501": "844601"},
   "successCount": 2,
@@ -237,10 +237,10 @@ mappings = {
 }
 ```
 
-**xinyu-resource-sheet-parser 返回**：
+**moyi-resource-sheet-parser 返回**：
 ```json
 {
-  "skill": "xinyu-resource-sheet-parser",
+  "skill": "moyi-resource-sheet-parser",
   "success": true,
   "missionEntries": [
     {"missionName": "签到", "rewardBoxId": "8439053"}
@@ -274,7 +274,7 @@ mws moyi-activity-backend <method> --env <online|test> --params '<json>' --forma
 
 ### POPO bot 与 skill 的契约
 
-POPO bot 服务在收到运营消息后，调用本仓的 `xinyu-plan-clone` skill 时需注入以下上下文：
+POPO bot 服务在收到运营消息后，调用本仓的 `moyi-activity-create` skill 时需注入以下上下文：
 - 环境变量 `MWS_DS_TOKEN`（公共账号 token，由 bot 服务统一管理）
 - 消息文本（含运营触发语 / 后续回复）
 - 回复回调（skill 可调用此回调向 POPO 发送消息）
@@ -294,7 +294,7 @@ POPO bot 服务在收到运营消息后，调用本仓的 `xinyu-plan-clone` ski
 | **mission.tenantId 跨期混乱** | 中 — 本期决策 2 不映射，新活动任务可能指向源奖池 | iOS 复购系列实施前用 mundo-query 抽查源 mission.tenantId 是否非空；若全为空（不耦合奖池）则风险消除；若非空需重新评估是否本期补 tenantId 映射 |
 | **会话超时 + 中途取消导致脏数据** | 中 — 新 plan 已建但模块未填全 | 主 skill 兜底通知中明确告知"请运营手动清理 plan id=X"；不自动删（mws 未暴露 plan-delete） |
 | **LLM 意图识别误触发** | 低 — 运营随口聊天可能误进流程 | 在意图识别 prompt 中加严格判定标准（必须含"创建" + "活动/计划"双关键词类）；首轮追问二选一确认 |
-| **抽奖 sheet 列名容错性** | 低 — 运营改了列名会导致解析失败 | xinyu-resource-sheet-parser 在 SKILL.md 中明确 9 个必需列名；解析失败时把"找不到列 X"原样反馈 |
+| **抽奖 sheet 列名容错性** | 低 — 运营改了列名会导致解析失败 | moyi-resource-sheet-parser 在 SKILL.md 中明确 9 个必需列名；解析失败时把"找不到列 X"原样反馈 |
 
 ## 实施依赖与验证清单
 

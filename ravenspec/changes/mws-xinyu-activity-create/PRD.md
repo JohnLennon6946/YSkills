@@ -481,11 +481,11 @@ Step D. 对每个 type=4（抽奖转盘）act-resource:
 
 ### 新增能力
 
-- `xinyu-plan-clone`：心遇活动发布计划克隆主流程，承载 POPO 入口触发、运营多轮交互（LLM 意图识别）、新 plan 创建、子模块编排调度（任务 → 抽奖 → 小程序活动顺序）、跨模块 ID 映射表管理（M1-M6）、兜底事件汇总通知
-- `xinyu-mission-clone`：心遇任务模块克隆，通过 `copyMundo` 一键克隆 mundo+box+mission 树，按任务名称反查覆盖 rewardBoxId，输出映射表 M2（源 box id → 新 box id）
-- `xinyu-lottery-clone`：心遇抽奖模块克隆，遍历源奖池 → query 详情 → 按抽奖 sheet 构造新 TenantConfigVO → template-create，输出映射表 M3/M4/M5（奖池 id / token / 资产币 id）
-- `xinyu-act-resource-clone`：心遇小程序活动模块克隆，按 type=7 → type=4 顺序创建 act-resource，对抽奖转盘 configJson 做 6 项跨模块 patch（token/relatedPoolId/relatedTicketId/relatedActivityId/taskPlayId/taskGroupId）+ ruleText 日期文案自动替换
-- `xinyu-resource-sheet-parser`：心遇活动资源配置表格解析（POPO 在线表格读取 + 任务 sheet 和抽奖 sheet 解析 + 字段校验），通过调用 `popo-doc-read` 实现表格读取，供 `xinyu-mission-clone` 与 `xinyu-lottery-clone` 共同消费
+- `moyi-activity-create`：心遇活动发布计划克隆主流程，承载 POPO 入口触发、运营多轮交互（LLM 意图识别）、新 plan 创建、子模块编排调度（任务 → 抽奖 → 小程序活动顺序）、跨模块 ID 映射表管理（M1-M6）、兜底事件汇总通知
+- `moyi-mission-clone`：心遇任务模块克隆，通过 `copyMundo` 一键克隆 mundo+box+mission 树，按任务名称反查覆盖 rewardBoxId，输出映射表 M2（源 box id → 新 box id）
+- `moyi-lottery-clone`：心遇抽奖模块克隆，遍历源奖池 → query 详情 → 按抽奖 sheet 构造新 TenantConfigVO → template-create，输出映射表 M3/M4/M5（奖池 id / token / 资产币 id）
+- `moyi-act-resource-clone`：心遇小程序活动模块克隆，按 type=7 → type=4 顺序创建 act-resource，对抽奖转盘 configJson 做 6 项跨模块 patch（token/relatedPoolId/relatedTicketId/relatedActivityId/taskPlayId/taskGroupId）+ ruleText 日期文案自动替换
+- `moyi-resource-sheet-parser`：心遇活动资源配置表格解析（POPO 在线表格读取 + 任务 sheet 和抽奖 sheet 解析 + 字段校验），通过调用 `popo-doc-read` 实现表格读取，供 `moyi-mission-clone` 与 `moyi-lottery-clone` 共同消费
 
 ### 修改能力
 
