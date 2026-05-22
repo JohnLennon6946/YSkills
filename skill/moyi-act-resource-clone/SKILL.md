@@ -1,9 +1,9 @@
 ---
-name: xinyu-act-resource-clone
-description: 心遇小程序活动模块克隆子 skill。接收源/新 wechat panel activityId + 映射表 M1-M5，拉取源 act-resource 列表，按 type=7 先 type=4 后顺序创建，对 type=4 configJson 做跨模块 patch + ruleText 日期替换，构建 M6 映射表。供 xinyu-plan-clone 主 skill 调用。
+name: moyi-act-resource-clone
+description: 心遇小程序活动模块克隆子 skill。接收源/新 wechat panel activityId + 映射表 M1-M5，拉取源 act-resource 列表，按 type=7 先 type=4 后顺序创建，对 type=4 configJson 做跨模块 patch + ruleText 日期替换，构建 M6 映射表。供 moyi-activity-create 主 skill 调用。
 ---
 
-# xinyu-act-resource-clone
+# moyi-act-resource-clone
 
 克隆源 plan 的小程序活动模块（act-resource），按 type=7 → type=4 顺序创建，对抽奖转盘做跨模块字段 patch。
 
@@ -16,10 +16,10 @@ description: 心遇小程序活动模块克隆子 skill。接收源/新 wechat p
 - `startTime`: 新活动开始时间（毫秒时间戳）
 - `endTime`: 新活动结束时间（毫秒时间戳）
 - `M1`: panel activityId 映射表（源 → 新）
-- `M2`: box id 映射表（源 → 新，来自 xinyu-mission-clone）
-- `M3`: tenantId 映射表（源 → 新，来自 xinyu-lottery-clone）
-- `M4`: token 映射表（源 → 新，来自 xinyu-lottery-clone）
-- `M5`: interestId 映射表（源 → 新，来自 xinyu-lottery-clone）
+- `M2`: box id 映射表（源 → 新，来自 moyi-mission-clone）
+- `M3`: tenantId 映射表（源 → 新，来自 moyi-lottery-clone）
+- `M4`: token 映射表（源 → 新，来自 moyi-lottery-clone）
+- `M5`: interestId 映射表（源 → 新，来自 moyi-lottery-clone）
 - `env`: 环境（online / test）
 
 ## 工作流程
@@ -27,8 +27,10 @@ description: 心遇小程序活动模块克隆子 skill。接收源/新 wechat p
 ### Step 1: 拉取源 act-resource 列表
 
 ```bash
-mws moyi-activity-backend act-resource-page --env <env> --params '{"trackId": "<sourceActivityId>", "page": {"from": 0, "size": 100}}' --format json
+mws moyi-activity-backend act-resource-page --env <env> --params '{"trackId": "<sourceActivityId>", "page": {"from": 0, "to": 1, "size": 100}}' --format json
 ```
+
+**注意**：page 必须同时包含 `from`、`to`、`size`，缺 `to` 会导致后端 500。
 
 分页处理：若返回 `page.total` > 已拉取数，继续翻页（from += size）直到拉完所有源 act-resource。
 
@@ -58,8 +60,10 @@ mws moyi-activity-backend act-resource-page --env <env> --params '{"trackId": "<
 #### 3.2 调用 act-resource-create
 
 ```bash
-mws moyi-activity-backend act-resource-create --env <env> --params '{"param": "<AddActResourceParamDTO JSON>"}' --format json
+mws moyi-activity-backend act-resource-create --env <env> --body '<AddActResourceParamDTO JSON>' --format json
 ```
+
+**注意**：act-resource-create 是 JSON body 接口（`application/json`），不能用 `--params` 传参。body 直接传 `{"type":7,"trackId":"<newActivityId>","name":"<name>","configJson":"<json>"}`。
 
 返回值为 boolean（true/false），不返回新 ID。
 
@@ -68,7 +72,7 @@ mws moyi-activity-backend act-resource-create --env <env> --params '{"param": "<
 创建成功后，调用 act-resource-page 按新 trackId 反查：
 
 ```bash
-mws moyi-activity-backend act-resource-page --env <env> --params '{"trackId": "<newActivityId>", "page": {"from": 0, "size": 100}}' --format json
+mws moyi-activity-backend act-resource-page --env <env> --params '{"trackId": "<newActivityId>", "page": {"from": 0, "to": 1, "size": 100}}' --format json
 ```
 
 在返回列表中按 `name` 匹配 + 取 `createTime` 最新的一条，获取新 act-resource id，写入 M6。
@@ -117,7 +121,7 @@ mws moyi-activity-backend act-resource-page --env <env> --params '{"trackId": "<
 - `yyyy.M.d-M.d` / `yyyy/M/d-M/d`（跨年格式）
 
 **替换规则**：
-- 识别到日期 → 用新活动日期替换（保持原格式；时间部分：开始 15:00:00，结束 23:59:59）
+- 识别到 → 用新活动日期替换（保持原格式；时间部分：开始 15:00:00，结束 23:59:59）
 - 未识别到 → 保留原文，记入兜底事件"抽奖转盘 <name> ruleText 中未识别到日期文案，请运营手工核对"
 
 **注意**：仅替换日期文案，不修改 ruleText 中的金额、规则等非日期内容。
@@ -136,14 +140,16 @@ mws moyi-activity-backend act-resource-page --env <env> --params '{"trackId": "<
 | `configJson` | patch 后的 JSON 字符串 |
 
 ```bash
-mws moyi-activity-backend act-resource-create --env <env> --params '{"param": "<AddActResourceParamDTO JSON>"}' --format json
+mws moyi-activity-backend act-resource-create --env <env> --body '<AddActResourceParamDTO JSON>' --format json
 ```
+
+**注意**：同 Step 3.2，必须走 JSON body 模式。**act-resource-create 不支持 update**（带 `id` 字段会报"参数非法"），仅用于新建。如需更新已有资源，使用 `/api/social/backend/act/resource/update`（当前 MWS 未注册此方法，需 curl 直连或后台操作）。
 
 若失败 → 跳过该资源，记入兜底事件，继续下一个。
 
 ### Step 5: 日期 token 识别与替换规则（用于 name）
 
-与 xinyu-lottery-clone 使用同一套规则：
+与 moyi-lottery-clone 使用同一套规则：
 - 识别到 → 用新日期替换原 token，保持 token 格式
 - 未识别到 → 在源名称末尾追加 ` <新开始M.d>-<新结束M.d>`
 
@@ -151,7 +157,7 @@ mws moyi-activity-backend act-resource-create --env <env> --params '{"param": "<
 
 ```json
 {
-  "skill": "xinyu-act-resource-clone",
+  "skill": "moyi-act-resource-clone",
   "success": true,
   "taskPlayIdMapping": {"12345": "12400", "12346": "12401"},
   "successCount": 4,

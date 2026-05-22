@@ -16,7 +16,7 @@ Push 计划创建执行 Skill：接收经过意图识别和权限校验的创建
 2. mws CLI 已安装且已认证
 3. 有 moyi-activity-backend 的 secretary-page 和 secretary-create 接口权限
 
-## 两种工作模式
+## 工作模式
 
 ### 模式 A：对话模式
 
@@ -30,21 +30,54 @@ Push 计划创建执行 Skill：接收经过意图识别和权限校验的创建
 
 由 wechat-push-schedule 调用，传入 `mode="B"`、`type`、`crowdPacketUrl`。
 
+### 模式 D：半自动任务模式
+
+由 wechat-push-schedule 调用，传入 `mode="D"`、`type`、`crowdPacketUrl`。
+
+执行流程与模式 B 相同（步骤 3 → 步骤 4 → 步骤 5），不发送通知，返回结果给调用方。
+
+与模式 B 的区别：模式 D 由用户手动触发，在 wechat-push-schedule 层增加了人群包确认步骤。
+
 ## 模式 A 执行流程
+
+1. 步骤 1：获取 crowdPacketUrl
+2. 步骤 2：人群包确认（输出下载地址，等待用户确认）
+3. 步骤 3：查询历史最优模板
+4. 步骤 4：参数组装
+5. 步骤 5：创建 Push 计划
+6. 步骤 6：发送结果通知
 
 ### 步骤 1：获取 crowdPacketUrl
 
 - 主入口传入 nosKey → 直接使用
 - 主入口传入 txt 文件路径：
-    1. 文件校验：检查存在性、.txt 格式、非空
-    2. 上传至 NOS 公有桶获取 crowdPacketUrl：
-       ```bash
-       nos-cli upload <txt文件路径> --public
-       ```
-       从返回 JSON 中取 `nos_url` 作为 crowdPacketUrl
-    3. 上传失败重试 3 次，均失败则提示用户直接提供 nosKey
+  1. 文件校验：检查存在性、.txt 格式、非空
+  2. 上传至 NOS 公有桶获取 crowdPacketUrl：
+     ```bash
+     nos-cli upload <txt文件路径> --public
+     ```
+     从返回 JSON 中取 `nos_url` 作为 crowdPacketUrl
+  3. 上传失败重试 3 次，均失败则提示用户直接提供 nosKey
 
-### 步骤 2：查询历史最优模板
+### 步骤 2：人群包确认（模式 A / 模式 C 适用）
+
+拿到 `crowdPacketUrl` 后，**先输出挪地址给用户检查人群**，等用户确认后再继续。
+
+**输出格式**：
+```
+人群包已生成，可点击下方链接下载检查：
+{downloadUrl}
+
+确认人群无误后发送「确认」继续创建推送计划。
+```
+
+- `downloadUrl` 为 `crowdPacketUrl` 对应的完整 NOS 下载地址（带签名）
+- 等待用户回复「确认」后，再进入步骤 3 查询模板
+- 用户回复「取消」则终止流程，返回：`已取消`
+
+**模式 B / 模式 D（定时任务）跳过此步骤**，直接进入步骤 3。
+
+### 步骤 3：查询历史最优模板
 
 按指定类型调用 mws `secretary-page` 查询过去 30 天的历史记录：
 
@@ -72,7 +105,7 @@ mws moyi-activity-backend secretary-page \
 
 如果筛选后无记录，返回失败："过去30天无可用历史模板记录"。
 
-### 步骤 3：参数组装
+### 步骤 4：参数组装
 
 基于选中的模板记录组装 `secretary-create` 请求参数：
 
@@ -111,7 +144,7 @@ mws moyi-activity-backend secretary-page \
 - `planType`: 原样复制模板
 - `extInfo`: 原样复制模板
 
-### 步骤 4：创建 Push 计划
+### 步骤 5：创建 Push 计划
 
 ```bash
 mws moyi-activity-backend secretary-create \
@@ -120,7 +153,7 @@ mws moyi-activity-backend secretary-create \
 
 **planName 重复处理**：接口返回 planName 已存在时，追加后缀重试（`_2`、`_3`），最多 3 次。
 
-### 步骤 5：发送结果通知
+### 步骤 6：发送结果通知
 
 根据触发方式决定通知目标和渠道：
 
@@ -128,6 +161,7 @@ mws moyi-activity-backend secretary-create \
 |---------|---------|---------|
 | 群聊 @机器人（模式 A/C） | @触发用户 | 私聊触发用户 |
 | 私聊机器人（模式 A/C） | 不发群聊 | 私聊触发用户 |
+| 模式 D（半自动任务） | 不发（由 wechat-push-schedule 统一汇总） | 不发 |
 | 模式 B（定时任务） | 不发（由 wechat-push-schedule 统一汇总） | 不发 |
 
 **成功通知格式**：
@@ -151,9 +185,22 @@ mws moyi-activity-backend secretary-create \
 
 由 wechat-push-schedule 调用，传入 `mode="B"`、`type`、`crowdPacketUrl`。
 
-执行步骤 2（查模板）→ 步骤 3（参数组装，crowdPacketUrl 使用传入值）→ 步骤 4（创建）。
+执行步骤 3（查模板）→ 步骤 4（参数组装，crowdPacketUrl 使用传入值）→ 步骤 5（创建）。
+
+**跳过步骤 2（人群包确认），定时任务全自动执行。**
 
 不发送通知，仅返回结果给调用方（成功返回 planId/planName/planTime/launchAccount，失败返回 errorReason），由 wechat-push-schedule 统一汇总通知。
+
+## 模式 D 执行流程
+
+由 wechat-push-schedule 调用，传入 `mode="D"`、`type`、`crowdPacketUrl`。
+
+执行流程与模式 B 完全相同：步骤 3（查模板）→ 步骤 4（参数组装）→ 步骤 5（创建）。
+
+**与模式 B 的区别**：
+- 模式 D 由用户手动触发（如"执行今天的微信push任务"）
+- 人群包确认步骤在 wechat-push-schedule 层完成，wechat-push-create 本身不感知差异
+- 不发送通知，返回结果给调用方，由 wechat-push-schedule 在用户确认后统一汇总通知
 
 ## 模式 C 执行流程
 
@@ -170,7 +217,7 @@ mws moyi-activity-backend secretary-create \
 | launchAccount | 投放账号 |
 | planTime | 执行时间（毫秒时间戳） |
 
-直接调用 `secretary-create` 创建，按步骤 5 发送结果通知。
+若 crowdPacketUrl 来自当前会话异步生成，先执行**步骤 2：人群包确认**，等用户确认后再调用 `secretary-create` 创建；若 crowdPacketUrl 由用户直接传入，直接进入创建环节，按步骤 6 发送结果通知。
 
 ## 错误处理
 

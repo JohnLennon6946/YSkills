@@ -1,9 +1,9 @@
 ---
-name: xinyu-lottery-clone
-description: 心遇抽奖模块克隆子 skill。接收源/新 spinach panel activityId + 抽奖资源数据，拉取源奖池列表并逐个复制（构造新 TenantConfigVO + template-create），构建 M3/M4/M5 映射表。供 xinyu-plan-clone 主 skill 调用。
+name: moyi-lottery-clone
+description: 心遇抽奖模块克隆子 skill。接收源/新 spinach panel activityId + 抽奖资源数据，拉取源奖池列表并逐个复制（构造新 TenantConfigVO + template-create），构建 M3/M4/M5 映射表。供 moyi-activity-create 主 skill 调用。
 ---
 
-# xinyu-lottery-clone
+# moyi-lottery-clone
 
 克隆源 plan 的抽奖模块（奖池 + 奖品配置），按资源表格设置 interestId / 奖品 / 权重。
 
@@ -14,7 +14,7 @@ description: 心遇抽奖模块克隆子 skill。接收源/新 spinach panel act
 - `newActivityId`: 新 spinach panel activityId（来自新 plan 的 panel-list，克隆目标）
 - `startTime`: 新活动开始时间（毫秒时间戳）
 - `endTime`: 新活动结束时间（毫秒时间戳）
-- `lotteryEntries`: 抽奖资源数据（来自 xinyu-resource-sheet-parser，按 sheet 顺序排列）
+- `lotteryEntries`: 抽奖资源数据（来自 moyi-resource-sheet-parser，按 sheet 顺序排列）
 - `env`: 环境（online / test）
 
 ## 工作流程
@@ -22,8 +22,10 @@ description: 心遇抽奖模块克隆子 skill。接收源/新 spinach panel act
 ### Step 1: 拉取源奖池列表
 
 ```bash
-mws moyi-activity-backend tenant-list --env <env> --params '{"activityId": "<sourceActivityId>", "appProductNames": "moyi", "page": {"from": 0, "size": 100}}' --format json
+mws moyi-activity-backend tenant-list --env <env> --params '{"activityId": "<sourceActivityId>", "appProductNames": "moyi", "page": {"from": 0, "to": 1, "size": 100}}' --format json
 ```
+
+**注意**：page 必须同时包含 `from`、`to`、`size` 三个字段，缺 `to` 会导致后端 500。
 
 分页处理：若返回 `page.total` > 已拉取数，继续翻页（from += size）直到拉完所有源奖池。
 
@@ -122,12 +124,26 @@ mws moyi-activity-backend tenant-query --env <env> --params '{"tenantId": "<tena
 mws moyi-activity-backend template-create --env <env> --params '{"config": "<新 TenantConfigVO JSON 字符串>"}' --format json
 ```
 
-**返回值处理**：template-create 返回完整 TenantConfigVO（含后端生成的新 tenantId / token），直接从返回值提取：
-- 新 tenantId = response.tenantId（或 response.basicInfo.tenantId）
-- 新 token = response.basicInfo.token
+**注意**：config JSON 较大时（含多奖品、中文文案等），query string 可能超出 URL 长度限制（`Invalid request path`），此时需精简 config 内容（去除 null 字段、缩短文案等）。
+
+**返回值处理**：template-create 返回的 `basicInfo.token` 固定为入参值（"0"），**不是后端实际生成的 token**。提取规则：
+- 新 tenantId = response.tenantId
+- 新 token = **见 Step 5.1**（template-create 不返回真实 token）
 - 新 interestId = response.tenantExtInfo.interestId
 
 若失败 → 跳过该奖池，记入兜底事件，继续下一个。
+
+### Step 5.1: 二次查询获取真实 token
+
+template-create 返回后，立即调用 tenant-query 获取后端异步生成的真实 token：
+
+```bash
+mws moyi-activity-backend tenant-query --env <env> --params '{"tenantId": "<新 tenantId>"}' --format json
+```
+
+从返回值 `basicInfo.token` 中取真实 token（如 `30V1048MaU9g2vl9iP2gv3kae`），用于 M4 映射。
+
+⚠️ 若跳过此步，M4 会记录错误 token（"0"），导致下游小程序活动的 relatedPoolId token 关联失败。
 
 ### Step 6: 构建映射表 M3 / M4 / M5
 
@@ -154,7 +170,7 @@ mws moyi-activity-backend template-create --env <env> --params '{"config": "<新
 
 ```json
 {
-  "skill": "xinyu-lottery-clone",
+  "skill": "moyi-lottery-clone",
   "success": true,
   "tenantIdMapping": {"601111": "601200", "601112": "601201"},
   "tokenMapping": {"abc123": "def456", "ghi789": "jkl012"},

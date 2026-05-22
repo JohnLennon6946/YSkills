@@ -32,7 +32,8 @@ description: |
 | 1 | 配置管理 | 消息包含"修改排期"、"新增场景"、"删除场景"、"查看排期"、"设置业务管理员"、"添加业务管理员"、"移除业务管理员"、"查看业务管理员" | 本 Skill 直接处理 |
 | 2 | 模式 A（创建计划） | 消息包含 nosKey（形如 `jdmosi-common/obj/...`）或 txt 文件附件，且提到预设类型之一 | 校验权限后分发到 wechat-push-create |
 | 3 | 模式 C（通用创建） | 消息要求手动指定参数或创建非预设类型 | 校验权限后分发到 wechat-push-create |
-| 4 | 模式 B（定时任务） | 由 cron 定时触发，或内部调用传入 `mode: "B"` | 分发到 wechat-push-schedule |
+| 4 | 模式 D（半自动任务） | 消息包含"执行今天的微信push任务"等类似表达，或内部调用传入 `mode: "D"` | 类似模式B的全自动主流程，但增加人群包确认步骤，让用户double-check后再继续 |
+| 5 | 模式 B（定时任务） | 由 cron 定时触发，或内部调用传入 `mode: "B"` | 分发到 wechat-push-schedule |
 
 模式 A 中类型不明确时，主动追问用户："请问要创建哪种类型的 push 计划？（签到/高耗币/礼物过期/家族签到/私聊）"
 
@@ -126,7 +127,11 @@ description: |
 
 ### 分发到 wechat-push-schedule
 
-适用于模式 B（cron 定时触发），无需额外参数，wechat-push-schedule 自行读取排期配置。
+适用于模式 B（定时任务）和模式 D（半自动任务）。
+
+**模式 B**：由 cron 定时触发，全自动执行，无需额外参数，wechat-push-schedule 自行读取排期配置。
+
+**模式 D**：用户手动触发（如"执行今天的微信push任务"），传入 `mode: "D"` 和当天匹配的 `todayTypes` 列表。类似模式 B 的全自动主流程，但增加人群包确认步骤，让用户 double-check 后再继续。
 
 ## 错误处理
 
