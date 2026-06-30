@@ -99,7 +99,7 @@
 | 文件 | 操作 | 改动内容 |
 |------|------|----------|
 | `skill/union-resource-recommend/SKILL.md` | 新增 | Skill 定义：触发词、7 步执行流程（含 CronCreate 轮询）、错误处理、MWS 接口调用 |
-| `skill/union-resource-recommend/.cache/latest-result.json` | 新增 | 第一步结果缓存，供第二步序号→ID 映射 |
+| `skill/union-resource-recommend/.cache/latest-result.json` | 新增 | 第一步结果缓存，供第二步 rank→room_no 映射 |
 | `ravenspec/changes/digital-employee-union-resource/PRD.md` | 新增 | 产品需求文档 |
 | `ravenspec/changes/digital-employee-union-resource/DESIGN.md` | 新增 | 本文档 |
 | `ravenspec/changes/digital-employee-union-resource/FINDINGS.md` | 新增 | 待创建 |
@@ -131,7 +131,7 @@ mws moyi-activity-backend open-task-process-status --params '{"processId":"union
 ```
 curl -s -X POST "https://moyi-activity-backend.<domain>/moyi/voice/rcmdback/add" \
   -H "Content-Type: application/json" \
-  -d '{"slots":"12345,12346","position":"1","startTime":"2025-01-01","endTime":"2025-01-07","tabType":"theme"}'
+  -d '{"slots":"1469611,1722583","position":"1","startTime":"2025-01-01","endTime":"2025-01-07","tabType":"theme"}'
 → { id: "abc123", ... }
 ```
 

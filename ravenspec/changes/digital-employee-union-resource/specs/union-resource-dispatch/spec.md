@@ -46,23 +46,23 @@
 
 #### Scenario: 单个心遇号指令
 - **WHEN** 用户发送"tab=theme 心遇号 12345,12346 放2号位，时间是2025-01-08~2025-01-14"
-- **THEN** 系统解析出：tabType="唠嗑"、房间 ID 列表 ["12345", "12346"]、号位 "2"、开始时间 "2025-01-08"、结束时间 "2025-01-14"
+- **THEN** 系统解析出：tabType="theme"、房间号列表 ["12345", "12346"]、号位 "2"、开始时间 "2025-01-08"、结束时间 "2025-01-14"
 
 #### Scenario: 心遇号 ID 非数字
 - **WHEN** 用户指定的心遇号包含非数字字符（如"abc123"）
-- **THEN** 系统提示"房间 ID 格式异常：{id}"，跳过该 ID
+- **THEN** 系统提示"房间号 (room_no) 格式异常：{id}"，跳过该 ID
 
 #### Scenario: 混合使用两种格式
 - **WHEN** 用户在同一消息中混合使用序号范围和心遇号格式
 - **THEN** 系统分别按各自规则解析，汇总为完整的分配指令列表，共用同一个 tabType
 
-### Requirement: 序号到房间 ID 映射
+### Requirement: rank 到 room_no 映射
 
-系统必须在第一步表格缓存中按序号查找对应的房间 ID。
+系统必须从第一步缓存文件 latest-result.json 中按 rank 查找对应的房间号（room_no），用逗号拼接为 slots 参数。
 
 #### Scenario: 正常映射
-- **WHEN** 用户指定序号范围 1-10
-- **THEN** 系统从 `skill/union-resource-recommend/.cache/latest-result.json` 中取出序号 1 到 10 对应的房间 ID，用逗号拼接为 slots 参数
+- **WHEN** 用户指定"1-10号放"（即 rank 1-10）
+- **THEN** 系统从 `skill/union-resource-recommend/.cache/latest-result.json` 中取出 rank 为 1 到 10 的行对应的 room_no，用逗号拼接为 slots 参数
 
 #### Scenario: 缓存文件缺失
 - **WHEN** latest-result.json 不存在（未执行第一步或缓存已清理）
@@ -94,7 +94,7 @@
 
 #### Scenario: 正常查询并展示
 - **WHEN** 全部 rcmdback-add 调用完成后，系统调用 rcmdback-list
-- **THEN** 系统输出包含号位、房间 ID 列表（含数量）、tab 类型、生效时间、计划 ID、状态的 Markdown 表格
+- **THEN** 系统输出包含号位、房间号 (room_no) 列表（含数量）、tab 类型、生效时间、计划 ID、状态的 Markdown 表格
 
 #### Scenario: rcmdback-list 查询失败
 - **WHEN** rcmdback-list 接口返回错误
